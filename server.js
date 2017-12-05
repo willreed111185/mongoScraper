@@ -9,21 +9,15 @@ var nodemailer = require('nodemailer');
 var CronJob    = require('cron').CronJob;
 var fs         = require('fs');
 var app        = express();
-var PORT       = "4000";
+var PORT       = process.env.PORT || 8080;;
 var emailServer = "Gmail";
 var emailFrom  = "NodeStockAlert@gmail.com";
 var emailTo    = "NodeStockAlert@gmail.com";
 var emailPassword = "monicaNguyen";
 var urlBase     = "https://www.marketwatch.com/investing/stock/";
 var timeZoneUser= "America/New_York";
-
+//mongodb://heroku_s0dpkg20:vnj4g7gd12b9cjm5ggd8g7ge85@ds129966.mlab.com:29966/heroku_s0dpkg20
 var app = express();
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//set this via MONGO
-// let priceBottom = 37; //when to BUY
-// let priceTop = 38;    //when to SELL
-// var StockTicker   = "t";
 
 var time = timeStamp('MM/DD/YYYY HH:mm:ss');
 console.log("Application Initiated: "+time);
@@ -35,7 +29,6 @@ var quoteMailer = nodemailer.createTransport({
         pass: emailPassword
     }
 });
-//----------------------------------------------------------
 
 app.use(logger("dev"));
 app.use(bodyParser.urlencoded({
@@ -55,7 +48,6 @@ db.on("error", function(error) {
   console.log("Database Error:", error);
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
 app.get('/scrape', function(req, res){
   //Hit the stocks site and scrape it, scrape it good
   db.quoteTrack.find({},function(error, found) {
@@ -96,7 +88,7 @@ app.get('/scrape', function(req, res){
     }
   });
 });
-//-------------------------------------------------
+
 
 app.get("/", function(req, res) {
   res.send(index.html);
@@ -210,5 +202,5 @@ var upDateCronJob = new CronJob({
 upDateCronJob.start()
 
 app.listen(PORT, function() {
-  console.log("App running on port "+PORT+"!");
+  console.log("App running on port 4000!");
 });
