@@ -20,12 +20,13 @@ var timeZoneUser= "America/New_York";
 var mongoose = require("mongoose");
 mongoose.Promise = Promise;
 
-MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/quoteDB";
-mongoose.connect(MONGODB_URI, {
+MONGODB_URIDB = process.env.MONGODB_URI || "mongodb://localhost/quoteDB";
+mongoose.connect(MONGODB_URIDB, {
   useMongoClient: true
 });
 var db = require("./models");
 
+//mongodb://heroku_s0dpkg20:vnj4g7gd12b9cjm5ggd8g7ge85@ds129966.mlab.com:29966/heroku_s0dpkg20
 //mongodb://heroku_s0dpkg20:vnj4g7gd12b9cjm5ggd8g7ge85@ds129966.mlab.com:29966/heroku_s0dpkg20
 
 var app = express();
