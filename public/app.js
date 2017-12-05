@@ -47,6 +47,7 @@ $(document).on("click", "#makenew", function() {
     $("#ticker").val("");
     $("#ceiling").val("");
     $("#floor").val("");
+    getResults();
   }
   );
 });
@@ -91,25 +92,25 @@ $(document).on("click", ".deleter", function() {
 });
 
 // When user click's on note title, show the note, and allow for updates
-$(document).on("click", ".dataTitle", function() {
-  // Grab the element
-  var selected = $(this);
-  // Make an ajax call to find the note
-  // This uses the data-id of the p-tag, which is linked to the specific note
-  $.ajax({
-    type: "GET",
-    url: "/find/" + selected.attr("data-id"),
-    success: function(data) {
-      // Fill the inputs with the data that the ajax call collected
-      $("#ticker").val(data.ticker);
-      $("#ceiling").val(data.ceiling);
-      $("#floor").val(data.floor);
-      // Make the #actionbutton an update button, so user can
-      // Update the note s/he chooses
-      $("#actionbutton").html("<button id='updater' data-id='" + data._id + "'>Update</button>");
-    }
-  });
-});
+// $(document).on("click", ".dataTitle", function() {
+//   // Grab the element
+//   var selected = $(this);
+//   // Make an ajax call to find the note
+//   // This uses the data-id of the p-tag, which is linked to the specific note
+//   $.ajax({
+//     type: "GET",
+//     url: "/find/" + selected.attr("data-id"),
+//     success: function(data) {
+//       // Fill the inputs with the data that the ajax call collected
+//       $("#ticker").val(data.ticker);
+//       $("#ceiling").val(data.ceiling);
+//       $("#floor").val(data.floor);
+//       // Make the #actionbutton an update button, so user can
+//       // Update the note s/he chooses
+//       $("#actionbutton").html("<button id='updater' data-id='" + data._id + "'>Update</button>");
+//     }
+//   });
+// });
 
 // When user click's update button, update the specific note
 $(document).on("click", "#updater", function() {

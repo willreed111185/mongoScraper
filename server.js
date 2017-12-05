@@ -9,14 +9,25 @@ var nodemailer = require('nodemailer');
 var CronJob    = require('cron').CronJob;
 var fs         = require('fs');
 var app        = express();
-var PORT       = process.env.PORT || 8080;;
+var PORT       = process.env.PORT || 4000;;
 var emailServer = "Gmail";
 var emailFrom  = "NodeStockAlert@gmail.com";
 var emailTo    = "NodeStockAlert@gmail.com";
 var emailPassword = "monicaNguyen";
 var urlBase     = "https://www.marketwatch.com/investing/stock/";
 var timeZoneUser= "America/New_York";
+//+++++++++++++++++++
+var mongoose = require("mongoose");
+mongoose.Promise = Promise;
+
+MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/quoteDB";
+mongoose.connect(MONGODB_URI, {
+  useMongoClient: true
+});
+var db = require("./models");
+
 //mongodb://heroku_s0dpkg20:vnj4g7gd12b9cjm5ggd8g7ge85@ds129966.mlab.com:29966/heroku_s0dpkg20
+
 var app = express();
 
 var time = timeStamp('MM/DD/YYYY HH:mm:ss');
@@ -36,25 +47,13 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(express.static("public"));
 
-// Database configuration
-var databaseUrl = "quoteDB";
-var collections = ["quoteTrack"];
 
-// Hook mongojs config to db variable
-var db = mongojs(databaseUrl, collections);
-
-// Log any mongojs errors to console
-db.on("error", function(error) {
-  console.log("Database Error:", error);
-});
 
 app.get('/scrape', function(req, res){
   //Hit the stocks site and scrape it, scrape it good
-  db.quoteTrack.find({},function(error, found) {
-    if (error) {
-      console.log("1: ",error);
-    }
-    else {
+  db.Quote
+    .find({})
+    .then(function(found){
       for(let i=0; i<found.length; i++){
         let StockTicker = found[i].ticker;
         let priceBottom = found[i].floor; //when to BUY
@@ -84,9 +83,13 @@ app.get('/scrape', function(req, res){
           }else{console.log("ERROR ON REQUEST")}
         });
       }
+    })
+    .then(function(results){
       res.redirect("/")
-    }
-  });
+    })
+    .catch(function(err){
+      console.log(err);
+    });
 });
 
 
@@ -95,61 +98,56 @@ app.get("/", function(req, res) {
 });
 
 app.post("/submit", function(req, res) {
-  //console.log(req.body);
-  db.quoteTrack.insert(req.body, function(error, saved) {
-    if (error) {
-      console.log(error);
-    }
-    else {
+  console.log(req.body);
+  db.Quote
+    .create(req.body)
+    .then(function(saved){
       res.send(saved);
-    }
-  });
+    })
+    .catch(function(err){
+      console.log(err);
+    })
 });
 
 app.get("/all", function(req, res) {
-  // Find all quotes in the quotes collection
-  db.quoteTrack.find({}, function(error, found) {
-    //console.log(found);
-    // Log any errors
-    if (error) {
-      console.log(error);
-    }
-    // Otherwise, send json of the quotes back to user
-    // This will fire off the success function of the ajax request
-    else {
-      res.json(found);
-    }
-  });
+  db.Quote
+    .find({})
+    .then(function(dbALL){
+      res.send(dbALL);
+    })
+    .catch(function(err){
+      console.log(err);
+    });
 });
 
 
-// Update just one quote by an id
-app.post("/update/:id", function(req, res) {
-  // Update the quote that matches the object id
-  db.quoteTrack.update({
-    "_id": mongojs.ObjectId(req.params.id)
-  }, {
-    $set: {
-      "ticker": req.body.ticker,
-      "ceiling": req.body.ceiling,
-      "floor": req.body.floor,
-      "modified": Date.now()
-    }
-  }, function(error, edited) {
-    if (error) {
-      console.log(error);
-      res.send(error);
-    }
-    else {
-      //console.log(edited);
-      res.send(edited);
-    }
-  });
-});
+// // Update just one quote by an id
+// app.post("/update/:id", function(req, res) {
+//   // Update the quote that matches the object id
+//   db.quoteTrack.update({
+//     "_id": mongojs.ObjectId(req.params.id)
+//   }, {
+//     $set: {
+//       "ticker": req.body.ticker,
+//       "ceiling": req.body.ceiling,
+//       "floor": req.body.floor,
+//       "modified": Date.now()
+//     }
+//   }, function(error, edited) {
+//     if (error) {
+//       console.log(error);
+//       res.send(error);
+//     }
+//     else {
+//       //console.log(edited);
+//       res.send(edited);
+//     }
+//   });
+// });
 
 
 app.get("/delete/:id", function(req, res) {
-  db.quoteTrack.remove({
+  db.Quote.remove({
     "_id": mongojs.ObjectID(req.params.id)
   }, function(error, removed) {
     if (error) {
@@ -164,7 +162,7 @@ app.get("/delete/:id", function(req, res) {
 });
 
 app.get("/clearall", function(req, res) {
-  db.quoteTrack.remove({}, function(error, response) {
+  db.Quote.remove({}, function(error, response) {
     if (error) {
       console.log(error);
       res.send(error);
@@ -177,20 +175,20 @@ app.get("/clearall", function(req, res) {
 });
 
 // Select just one quote by an id
-app.get("/find/:id", function(req, res) {
-  db.quoteTrack.findOne({
-    "_id": mongojs.ObjectId(req.params.id)
-  }, function(error, found) {
-    if (error) {
-      console.log(error);
-      res.send(error);
-    }
-    else {
-      //console.log(found);
-      res.send(found);
-    }
-  });
-});
+// app.get("/find/:id", function(req, res) {
+//   db.quoteTrack.findOne({
+//     "_id": mongojs.ObjectId(req.params.id)
+//   }, function(error, found) {
+//     if (error) {
+//       console.log(error);
+//       res.send(error);
+//     }
+//     else {
+//       //console.log(found);
+//       res.send(found);
+//     }
+//   });
+// });
 
 var upDateCronJob = new CronJob({
   cronTime: '* * * * *', 
