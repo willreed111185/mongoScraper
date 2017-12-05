@@ -1,4 +1,5 @@
-var mongojs = require("mongojs");
+var mongojs = require("mongojs"); 
+
 var bodyParser = require("body-parser");
 var logger = require("morgan");
 var timeStamp  = require('time-stamp');
@@ -20,7 +21,8 @@ var timeZoneUser= "America/New_York";
 var mongoose = require("mongoose");
 mongoose.Promise = Promise;
 
-MONGODB_URIDB = process.env.MONGODB_URI || "mongodb://localhost/quoteDB";
+//MONGODB_URIDB = process.env.MONGODB_URI || "mongodb://localhost/quoteDB";
+MONGODB_URIDB = "mongodb://heroku_s0dpkg20:vnj4g7gd12b9cjm5ggd8g7ge85@ds129966.mlab.com:29966/heroku_s0dpkg20";
 mongoose.connect(MONGODB_URIDB, {
   useMongoClient: true
 });
