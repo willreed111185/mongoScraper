@@ -21,9 +21,9 @@ var app = express();
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //set this via MONGO
-let priceBottom = 37; //when to BUY
-let priceTop = 38;    //when to SELL
-var StockTicker   = "t";
+// let priceBottom = 37; //when to BUY
+// let priceTop = 38;    //when to SELL
+// var StockTicker   = "t";
 
 var time = timeStamp('MM/DD/YYYY HH:mm:ss');
 console.log("Application Initiated: "+time);
@@ -57,33 +57,44 @@ db.on("error", function(error) {
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 app.get('/scrape', function(req, res){
-  var $, priceAlert;
   //Hit the stocks site and scrape it, scrape it good
-  request(urlBase+StockTicker, function(error, response, html) {
-    if(!error) {
-      $ = cheerio.load(html);
-      priceAlert = parseFloat($('h3.intraday__price').text().trim().replace("$",""));
-      //console.log(priceAlert);
-      //Mongo search for specified PRICEALERT setting and wrap the email in an IF Statement
-      if (priceAlert < priceBottom || priceAlert>priceTop){
-        var mailOptions = {
-          from: emailFrom,
-          to: emailTo,
-          subject: 'STOCK ALERT',
-          text: 'WE HAVE AN URGENT STOCK ALERT $' + priceAlert
-        };
-        quoteMailer.sendMail(mailOptions, function(error, info){
-          if(error) {
-            return console.log("1: ",error);
-          }
-          var currentTime = timeStamp('MM/DD/YYYY:HH:mm:ss');
-          console.log("Sent Update To: "+emailTo+" AT "+currentTime);
-        }); 
+  db.quoteTrack.find({},function(error, found) {
+    if (error) {
+      console.log("1: ",error);
+    }
+    else {
+      for(let i=0; i<found.length; i++){
+        let StockTicker = found[i].ticker;
+        let priceBottom = found[i].floor; //when to BUY
+        let priceTop = found[i].ceiling;    //when to SELL
+        request(urlBase+StockTicker, function(error, response, html) {
+          if(!error) {
+            let $ = cheerio.load(html);
+            let priceAlert = parseFloat($('h3.intraday__price').children().text().replace("$","").replace(",",""));
+            console.log("priceAlert: ",priceAlert);
+            console.log("1PriceAlert: "+priceAlert+" PriceBottom: "+priceBottom+" PriceTop: "+priceTop);
+            if (priceAlert < priceBottom || priceAlert > priceTop){
+              console.log("2PriceAlert: "+priceAlert+" PriceBottom: "+priceBottom+" PriceTop: "+priceTop);
+              let mailOptions = {
+                from: emailFrom,
+                to: emailTo,
+                subject: 'STOCK ALERT',
+                text: 'URGENT STOCK ALERT $' + priceAlert + " For: "+StockTicker
+                };
+              quoteMailer.sendMail(mailOptions, function(error, info){
+                if(error) {
+                  return console.log("1: ",error);
+                }
+                let currentTime = timeStamp('MM/DD/YYYY:HH:mm:ss');
+                console.log("Sent Update To: "+emailTo+" AT "+currentTime+ "for "+StockTicker);
+              }); 
+            }
+          }else{console.log("ERROR ON REQUEST")}
+        });
       }
-
-    }else{console.log("ERROR ON REQUEST")}
+      res.redirect("/")
+    }
   });
-  res.redirect("/")
 });
 //-------------------------------------------------
 
@@ -92,7 +103,7 @@ app.get("/", function(req, res) {
 });
 
 app.post("/submit", function(req, res) {
-  console.log(req.body);
+  //console.log(req.body);
   db.quoteTrack.insert(req.body, function(error, saved) {
     if (error) {
       console.log(error);
@@ -106,7 +117,7 @@ app.post("/submit", function(req, res) {
 app.get("/all", function(req, res) {
   // Find all quotes in the quotes collection
   db.quoteTrack.find({}, function(error, found) {
-    console.log(found);
+    //console.log(found);
     // Log any errors
     if (error) {
       console.log(error);
@@ -138,7 +149,7 @@ app.post("/update/:id", function(req, res) {
       res.send(error);
     }
     else {
-      console.log(edited);
+      //console.log(edited);
       res.send(edited);
     }
   });
@@ -154,7 +165,7 @@ app.get("/delete/:id", function(req, res) {
       res.send(error);
     }
     else {
-      console.log(removed);
+      //console.log(removed);
       res.send(removed);
     }
   });
@@ -167,7 +178,7 @@ app.get("/clearall", function(req, res) {
       res.send(error);
     }
     else {
-      console.log(response);
+      //console.log(response);
       res.send(response);
     }
   });
@@ -183,7 +194,7 @@ app.get("/find/:id", function(req, res) {
       res.send(error);
     }
     else {
-      console.log(found);
+      //console.log(found);
       res.send(found);
     }
   });
